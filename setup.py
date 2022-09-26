@@ -31,7 +31,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     version=find_version("src", "__init__.py"),
     python_requires=">=3.7",
-    py_modules=["VideoSubOCR"],
+    py_modules=["src"],
     install_requires=[
         "Pillow",
         "pysubs2",
