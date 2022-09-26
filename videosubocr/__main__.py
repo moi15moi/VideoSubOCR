@@ -6,7 +6,7 @@ from .Parse import parseArguments
 def main():
     videoSubFinder, ocrEngine = parseArguments()
 
-    videoSubFinder.runClearedTextImages()
+    videoSubFinder.generateImages()
     ocrText = ocrEngine.runOCR(videoSubFinder.txtImages)
     createSubsFromOCRResults(ocrText)
 

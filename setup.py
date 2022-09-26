@@ -29,16 +29,15 @@ setuptools.setup(
     author_email="moi15moismokerlolilol@gmail.com",
     description="VideoSubFinder automation.",
     long_description_content_type="text/markdown",
-    version=find_version("src", "__init__.py"),
+    version=find_version("videosubocr", "__init__.py"),
     python_requires=">=3.7",
-    py_modules=["src"],
     install_requires=[
         "Pillow",
         "pysubs2",
         "pytesseract",
         "rich",
     ],
-    entry_points={"console_scripts": ["VideoSubOCR=src.__main__:main"]},
+    entry_points={"console_scripts": ["VideoSubOCR=videosubocr.__main__:main"]},
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Other Audience",
