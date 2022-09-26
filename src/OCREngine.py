@@ -1,0 +1,264 @@
+import pytesseract
+import os
+import sys
+from abc import ABC, abstractmethod
+from .Helpers import parseDependency, runCommand, WINDOWS_CHARACTER_LIMIT
+from pathlib import Path
+from PIL.Image import Image
+from rich.console import Console
+from rich.progress import track
+from typing import List, Dict
+
+
+class OCREngine(ABC):
+    @property
+    @abstractmethod
+    def engineName(self):
+        pass
+
+    @property
+    @abstractmethod
+    def enginePath(self):
+        pass
+
+    @property
+    @abstractmethod
+    def lang(self):
+        pass
+
+    @abstractmethod
+    def runOCR(self, images: Dict[Path, Image]) -> Dict[Path, str]:
+        """
+        Parameters:
+            images (Dict[Path, Image]): The Dictionnary to be splitted.
+        Returns:
+            The OCR results. The path is the image path AND the str is the ocr result.
+        """
+        pass
+
+
+class Tesseract(OCREngine):
+
+    engineName = "Tesseract"
+    lang: str
+
+    def __init__(self, tesseractPath: Path, lang: str):
+        self.enginePath = parseDependency(self.engineName, tesseractPath)
+        pytesseract.pytesseract.tesseract_cmd = self.enginePath
+        self.lang = lang
+
+    @property
+    def enginePath(self):
+        return self._enginePath
+
+    @enginePath.setter
+    def enginePath(self, value):
+        self._enginePath = parseDependency(self.engineName, value)
+
+    @property
+    def lang(self):
+        return self._lang
+
+    @lang.setter
+    def lang(self, value):
+        languagesList = pytesseract.get_languages()
+        if value in languagesList:
+            self._lang = value
+        else:
+            sys.exit(
+                Console().print(
+                    f"Error: You can't select the language: {value}.\nHere is all the available language: "
+                    + ", ".join(languagesList),
+                    style="red1",
+                )
+            )
+
+    def runOCR(self, images: Dict[Path, Image]) -> Dict[Path, str]:
+        ocrText = {}
+
+        for key in track(images, description=f"{self.engineName}..."):
+            ocrText[key] = pytesseract.image_to_string(
+                images[key], lang=self.lang
+            ).strip()
+
+        Console().print(
+            f"{self.engineName}: Successfully OCR the images", style="bright_green"
+        )
+
+        return ocrText
+
+
+class FineReader(OCREngine):
+
+    engineName = "ABBYY FineReader"
+    lang: str
+    outputPath = os.path.join(os.getcwd(), f"{engineName} - Output.txt")
+
+    def __init__(self, fineReaderPath: Path, lang: str):
+        if sys.platform != "win32":
+            raise OSError(
+                f"Sorry, {self.engineName} implementation only works on Windows."
+            )
+
+        self.enginePath = parseDependency(self.engineName, fineReaderPath)
+        self.lang = lang
+
+    @property
+    def enginePath(self):
+        return self._enginePath
+
+    @enginePath.setter
+    def enginePath(self, value):
+        self._enginePath = parseDependency(self.engineName, value)
+
+    @property
+    def lang(self):
+        return self._lang
+
+    @lang.setter
+    def lang(self, value):
+        # There is no proper way to verify if FineReader support X language: https://help.abbyy.com/en-us/finereader/15/user_guide/commandline_lang/
+        self._lang = value
+
+    @property
+    def formattedFinereaderPath(self):
+        return f'"{self.enginePath}"'
+
+    @property
+    def formattedLang(self):
+        lang = None
+        if self.lang is not None:
+            lang = f"/lang {self.lang}"
+        return lang
+
+    @property
+    def formattedOutputPath(self):
+        return f'/out "{self.outputPath}"'
+
+    @property
+    def basicCommandLength(self):
+        """
+        Command length without the images.
+        Ex:
+            Command:
+                "VideoSubFinderWXW.exe" /lang English /output "output.txt"
+
+            Command's argument:
+                "VideoSubFinderWXW.exe" => 23 characters
+                /lang English => 13 characters
+                /output "output.txt" => 20 characters
+                But, we also count the space between these arguments => 2 characters
+                Finally, we count the space for the future images arguments => 1 characters
+
+            Return:
+                23 + 13 + 20 + 2 + 1
+        """
+        # Set all the command parameter except the images list
+        fineReaderPath = self.formattedFinereaderPath
+        lang = self.formattedLang
+        outputPathStr = self.formattedOutputPath
+
+        # + 3 because we will join these elements with space
+        basicCommandLength = (
+            len(fineReaderPath)
+            + (0 if lang is None else len(lang))
+            + len(outputPathStr)
+            + 3
+        )
+
+        return basicCommandLength
+
+    def __parseOutputFile(self, file: Path) -> List[str]:
+        """
+        Parameters:
+            file (Path): The output text file generated by ABBYY FineReader.
+        Returns:
+            A list containing each lines of the OCR results.
+        """
+
+        lines = []
+        with open(file, encoding="utf-8") as file:
+            lines = file.readlines()
+            lines = "".join(lines)
+            # https://unicode-table.com/en/000C/
+            # We need it to conserve the \N
+            lines = lines.split("\x0c")
+
+        return lines
+
+    def __splitImages(self, imagesToSplit: Dict[Path, Image]) -> List[Dict[Path, Image]]:
+        """
+        Windows cmd API has a characters limit.
+        Because of that, we need to split the one possible command into multiple command to always have a command less than Helpers.WINDOWS_CHARACTER_LIMIT.
+
+        Parameters:
+            imagesToSplit (Dict[Path, Image]): The Dictionnary to be splitted.
+        Returns:
+            A list containing Dict.
+        """
+
+        untouchedRemainingStrLength = WINDOWS_CHARACTER_LIMIT - self.basicCommandLength
+
+        currentImages = {}
+        images = []
+        remainingStrLength = untouchedRemainingStrLength
+        for i, key in enumerate(list(imagesToSplit)):
+            # + 2 because __runOCR will add quotation mark
+            imageStrLength = len(str(key)) + 2
+
+            # (len(imagesToSplit) - 1) because we will add space between each element
+            possibleRemainingCharacter = (
+                remainingStrLength - imageStrLength - (len(imagesToSplit) - 1)
+            )
+
+            if possibleRemainingCharacter >= 0:
+                remainingStrLength -= imageStrLength
+                currentImages[key] = imagesToSplit[key]
+
+                if i == len(imagesToSplit) - 1:
+                    images.append(currentImages)
+
+            else:
+                images.append(currentImages)
+
+                # This is almost impossible, but it can happen.
+                if i == len(imagesToSplit) - 1:
+                    images.append({key: imagesToSplit[key]})
+                else:
+                    # Reset variable
+                    remainingStrLength = untouchedRemainingStrLength
+                    currentImages = {key: imagesToSplit[key]}
+
+        return images
+
+    def runOCR(self, images: Dict[Path, Image]) -> Dict[Path, str]:
+
+        images = self.__splitImages(images)
+        ocrText = {}
+
+        for i, dictImages in enumerate(images):
+            args = []
+
+            # Args items
+            args.append(self.formattedFinereaderPath)
+            args.append(" ".join(['"{}"'.format(image) for image in dictImages]))
+            if self.formattedLang is not None:
+                args.append(self.formattedLang)
+            args.append(self.formattedOutputPath)
+
+            runCommand(" ".join(args), f"{self.engineName} ({i + 1}/{len(images)})...")
+
+            # Get text
+            for (imagePath, text) in zip(
+                dictImages, self.__parseOutputFile(self.outputPath)
+            ):
+                ocrText[imagePath] = text.strip()
+
+        if os.path.exists(self.outputPath):
+            os.remove(self.outputPath)
+
+        Console().print(
+            f"{self.engineName}: Successfully OCR the images", style="bright_green"
+        )
+
+        return ocrText
