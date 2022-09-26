@@ -17,7 +17,7 @@ pip install git+https://github.com/moi15moi/VideoSubOCR.git
 ```console
 usage: VideoSubOCR [-h] --input INPUT [--generalSettings GENERALSETTINGS]
                    [--cropBoxDimension Width_or_Height Width_or_Height] [--cropBoxHeight Height]
-                   [--videosubfinderwxw VIDEOSUBFINDERWXW] [--tesseract TESSERACT] [--finereader FINEREADER]
+                   [--videosubfinderwxw VIDEOSUBFINDERWXW] [--tesseract [TESSERACT]] [--finereader [FINEREADER]]
                    [--lang LANG]
 
 Video OCR automation.
@@ -35,15 +35,17 @@ options:
                         CropBox height. It is the height between the video bottom and the cropbox bottom.
   --videosubfinderwxw VIDEOSUBFINDERWXW, -vsf VIDEOSUBFINDERWXW
                         Path to VideoSubFinderWXW.exe if not in variable environments.
-  --tesseract TESSERACT, -t TESSERACT
-                        Path to tesseract.exe if not in variable environments.
-  --finereader FINEREADER, -f FINEREADER
-                        Path to FineCmd.exe if not in variable environments.
+  --tesseract [TESSERACT], -t [TESSERACT]
+                        If tesseract.exe is in your variable environments, simply use --tesseract. If not, path to
+                        FineCmd.exe
+  --finereader [FINEREADER], -f [FINEREADER]
+                        If FineCmd.exe is in your variable environments, simply use --finereader. If not, path to
+                        FineCmd.exe
   --lang LANG, -l LANG  Language in which the hardsubbed subtitle is. It will be use by the ocr engine you choose.
-                        Warning, Tesseract and FineReader doesn't have the exact same input for the same language.
-                        Tesseract support ISO 639-2 (t version):
-                        https://www.loc.gov/standards/iso639-2/php/code_list.php FineReader support the fullname:
-                        https://help.abbyy.com/en-us/finereader/15/user_guide/commandline_lang/
+                        Warning, ABBYY FineReader and Tesseract doesn't have the exact same input for the same
+                        language. Tesseract support ISO 639-2 (t version):
+                        https://www.loc.gov/standards/iso639-2/php/code_list.php ABBYY FineReader support the
+                        fullname: https://help.abbyy.com/en-us/finereader/15/user_guide/commandline_lang/
 ```
 
 ### Setup for [ABBYY FineReader](https://pdf.abbyy.com)
