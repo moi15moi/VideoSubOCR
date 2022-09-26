@@ -1,3 +1,4 @@
+# This file is from: https://bitbucket.org/YuriZero/yolocr/src/master/YoloResize.vpy
 FichierSource=r'C:\Users\Admin\Desktop\[Edo]Gintama_18v2_vostfr[Xvid-MP3].avi'
 DimensionCropBox=[560,70] # Taille en largeur et hauteur de la CropBox délimitant les sous-titres à OCR.
 HauteurCropBox=6 # Hauteur de la CropBox délimitant les sous-titres à OCR.
