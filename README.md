@@ -13,6 +13,23 @@ pip install git+https://github.com/moi15moi/VideoSubOCR.git
 - [VapourSynth](https://github.com/vapoursynth/vapoursynth/releases/latest)  (Optional, but required to use cropbox argument)
 - [VapourSynth-Editor](https://github.com/YomikoR/VapourSynth-Editor/releases/latest)  (Optional, but required to use VideoPreview.vpy)
 
+### Setup for [ABBYY FineReader](https://pdf.abbyy.com)
+You will need to have the same parameters has this image.
+To change your parameters, open **ABBYY FineReader** and go to ``Tools -> Options -> Format Settings -> TXT``
+![Alt text](https://github.com/moi15moi/VideoSubOCR/blob/main/ABBYY%20FineReader%20-%20OCR%20Parameters.png)
+
+### Setup for [Tesseract](https://digi.bib.uni-mannheim.de/tesseract/?C=M;O=D)
+To be able to select the language you want, you need to download tesseract tessdata.
+
+- [tessdata](https://github.com/tesseract-ocr/tessdata)
+- [tessdata_best](https://github.com/tesseract-ocr/tessdata_best)
+- [tessdata_fast](https://github.com/tesseract-ocr/tessdata_fast)
+
+I recommand you to use **tessdata_best** traineddata.
+
+You will need to download the language you need and move it in the right folder.
+On Windows, it should be: ``C:\Users\YOUR_USERNAME\AppData\Local\Tesseract-OCR\tessdata``
+
 ## Usage
 ```console
 usage: VideoSubOCR [-h] --input INPUT [--generalSettings GENERALSETTINGS]
@@ -48,19 +65,18 @@ options:
                         fullname: https://help.abbyy.com/en-us/finereader/15/user_guide/commandline_lang/
 ```
 
-### Setup for [ABBYY FineReader](https://pdf.abbyy.com)
-You will need to have the same parameters has this image.
-To change your parameters, open **ABBYY FineReader** and go to ``Tools -> Options -> Format Settings -> TXT``
-![Alt text](https://github.com/moi15moi/VideoSubOCR/blob/main/ABBYY%20FineReader%20-%20OCR%20Parameters.png)
+### VideoSubFinder General Settings
+I recommand you to always create a setting.
+This will allow to have a better ocr
+You can save the settings with ``File --> Save Settings As...``
 
-### Setup for [Tesseract](https://digi.bib.uni-mannheim.de/tesseract/?C=M;O=D)
-To be able to select the language you want, you need to download tesseract tessdata.
+For more information about VideoSubFinder, see their [website](https://sourceforge.net/projects/videosubfinder/)
 
-- [tessdata](https://github.com/tesseract-ocr/tessdata)
-- [tessdata_best](https://github.com/tesseract-ocr/tessdata_best)
-- [tessdata_fast](https://github.com/tesseract-ocr/tessdata_fast)
+### Alternative to VideoSubFinder General Settings
 
-I recommand you to use **tessdata_best** traineddata.
+If you don't want to create a setting, I recommand you to use the file named **VideoPreview.vpy**. To use it, you will need to install [VapourSynth](https://github.com/vapoursynth/vapoursynth/releases/latest) and [VapourSynth-Editor](https://github.com/YomikoR/VapourSynth-Editor/releases/latest).
 
-You will need to download the language you need and move it in the right folder.
-On Windows, it should be: ``C:\Users\YOUR_USERNAME\AppData\Local\Tesseract-OCR\tessdata``
+1. Open VideoPreview.vpy with VapourSynth-Editor.
+2. Change ``inputVideo``, ``cropBoxDimension``, ``cropBoxHeight`` to the value you think you need.
+3. Press **F5**
+4. See if the cropbox is good for you. If not, repeat the step 2 and 3.
